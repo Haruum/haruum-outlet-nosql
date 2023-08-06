@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from .exceptions import (
     RestrictedAccessException,
     InvalidRequestException,
+    FailedToFetchException
 )
 
 
@@ -16,6 +17,9 @@ def custom_exception_handler(exception, context):
 
     elif isinstance(exception, InvalidRequestException):
         status_code = 400
+
+    elif isinstance(exception, FailedToFetchException):
+        status_code = 501
 
     else:
         status_code = 500

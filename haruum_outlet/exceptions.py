@@ -8,3 +8,7 @@ class InvalidRegistrationException(Exception):
 
 class InvalidRequestException(Exception):
     pass
+
+
+class FailedToFetchException(Exception):
+    pass

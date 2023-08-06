@@ -1,11 +1,16 @@
 from django.core.exceptions import ObjectDoesNotExist
-
 from haruum_outlet.decorators import catch_exception_and_convert_to_invalid_request_decorator
-from haruum_outlet.exceptions import InvalidRegistrationException, InvalidRequestException
+from haruum_outlet.exceptions import (
+    InvalidRegistrationException,
+    InvalidRequestException,
+    FailedToFetchException
+)
+from haruum_outlet.settings import CUSTOMER_VALIDATION_URL
 from haruum_outlet import utils as application_utils
 from ..models import LaundryOutlet, ItemCategoryProvided
 from . import utils
 import numbers
+import requests
 
 
 def validate_basic_user_registration_data(request_data: dict):
@@ -41,6 +46,17 @@ def validate_customer_does_not_exist_for_email(email):
     This method fetches the CustomerService and
     checks if the inputted email exists in the customer's database.
     """
+    validation_url = f'{CUSTOMER_VALIDATION_URL}{email}'
+
+    try:
+        customer_exists_response = requests.get(validation_url)
+        validation_result = customer_exists_response.json()
+
+        if validation_result.get('customer_exists'):
+            raise InvalidRequestException(f'Customer with email {email} already exists')
+
+    except requests.exceptions.RequestException:
+        raise FailedToFetchException('Failed to validate customer existence')
 
 
 def validate_laundry_outlet_information(request_data: dict):
@@ -195,6 +211,10 @@ def update_item_category_provided(request_data: dict):
         request_data.get('email'),
         request_data.get('services_provided')
     )
+
+
+def check_outlet_existence(request_data):
+    return utils.laundry_outlet_with_email_exist(request_data.get('email'))
 
 
 

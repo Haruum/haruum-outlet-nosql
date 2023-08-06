@@ -53,7 +53,7 @@ def serve_get_laundry_outlet_data(request):
     request data must contain:
     email: string
     """
-    request_data = json.loads(request.body.decode('utf-8'))
+    request_data = request.GET
     laundry_outlet = auth.get_laundry_outlet_data(request_data)
     response_data = LaundryOutletSerializer(laundry_outlet).data
     return Response(data=response_data)
@@ -100,4 +100,19 @@ def serve_update_item_category_provided(request):
     response_data = {'message': 'Service item category is successfully updated'}
     return Response(data=response_data)
 
+
+@require_GET
+@api_view(['GET'])
+def serve_check_outlet_existence(request):
+    """
+    This view checks whether an outlet corresponding to the
+    given email exists in the database.
+    ---------------------------------------------
+    request param must contain:
+    email: string
+    """
+    request_data = request.GET
+    outlet_exists = auth.check_outlet_existence(request_data)
+    response_data = {'outlet_exists': outlet_exists}
+    return Response(data=response_data)
 

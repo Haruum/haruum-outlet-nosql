@@ -168,4 +168,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'user_management.LaundryOutlet'
+AUTH_USER_MODEL = 'user_management.HaruumUser'
+
+CUSTOMER_APPLICATION_URL = 'http://localhost:8001'
+CUSTOMER_VALIDATION_URL = f'{CUSTOMER_APPLICATION_URL}/user/check-exist/?email='
