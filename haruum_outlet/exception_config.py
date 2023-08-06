@@ -19,7 +19,7 @@ def custom_exception_handler(exception, context):
         status_code = 400
 
     elif isinstance(exception, FailedToFetchException):
-        status_code = 501
+        status_code = 502
 
     else:
         status_code = 500
