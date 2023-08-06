@@ -3,11 +3,11 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from order.exceptions import OrderException
-from .managers import LaundryOutletManager
+from .managers import HaruumUserManager
 import uuid
 
 
-class LaundryOutlet(AbstractUser):
+class HaruumUser(AbstractUser):
     username = None
     first_name = None
     last_name = None
@@ -16,6 +16,16 @@ class LaundryOutlet(AbstractUser):
     name = models.CharField(max_length=100, null=False)
     phone_number = models.CharField(max_length=15, null=False)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name', 'phone_number']
+
+    objects = HaruumUserManager()
+
+    class Meta:
+        db_table = 'auth_user'
+
+
+class LaundryOutlet(HaruumUser):
     address = models.TextField()
     latitude = models.FloatField(null=True, default=None)
     longitude = models.FloatField(null=True, default=None)
@@ -25,14 +35,6 @@ class LaundryOutlet(AbstractUser):
     amount_of_reviewed_orders = models.IntegerField(default=0)
     is_available = models.BooleanField(default=True)
     outlet_rating = models.FloatField(default=0)
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name', 'phone_number']
-
-    objects = LaundryOutletManager()
-
-    class Meta:
-        db_table = 'auth_user'
 
     def set_is_available(self, is_available):
         self.is_available = is_available
@@ -62,7 +64,6 @@ class LaundryOutlet(AbstractUser):
         if not self.can_accept_order():
             raise OrderException(f'Laundry outlet {self.name} has reached its maximum workload')
         else:
-            self.amount_of_reviewed_orders += 1
             self.amount_of_active_orders += 1
             self.save()
 

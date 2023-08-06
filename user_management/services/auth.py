@@ -59,11 +59,11 @@ def validate_laundry_outlet_information(request_data: dict):
     if not isinstance(request_data.get('address'), str):
         raise InvalidRegistrationException('Address must be a string')
 
-    if not isinstance(request_data.get('latitude'), float):
-        raise InvalidRegistrationException('Latitude must be a float')
+    if not isinstance(request_data.get('latitude'), numbers.Number):
+        raise InvalidRegistrationException('Latitude must be a number')
 
-    if not isinstance(request_data.get('longitude'), float):
-        raise InvalidRegistrationException('Longitude must be a float')
+    if not isinstance(request_data.get('longitude'), numbers.Number):
+        raise InvalidRegistrationException('Longitude must be a number')
 
 
 def save_laundry_outlet_data(outlet_data: dict):
@@ -155,7 +155,7 @@ def validate_service_category_datum(service_category_data):
         raise InvalidRequestException('Service category ID does not exist')
 
     if not isinstance(service_category_data.get('price_per_item'), numbers.Number):
-        raise InvalidRequestException('Price per item must be of type float')
+        raise InvalidRequestException('Price per item must be of type number')
 
 
 def validate_update_item_category_data(request_data):
