@@ -7,6 +7,7 @@ from haruum_outlet.exceptions import (
 )
 from haruum_outlet.settings import CUSTOMER_VALIDATION_URL
 from haruum_outlet import utils as application_utils
+from rest_framework import status
 from ..models import LaundryOutlet, ItemCategoryProvided
 from . import utils
 import numbers
@@ -52,6 +53,9 @@ def validate_customer_does_not_exist_for_email(email):
         customer_exists_response = requests.get(validation_url)
         validation_result = customer_exists_response.json()
 
+        if customer_exists_response.status_code != status.HTTP_200_OK:
+            raise FailedToFetchException(validation_result.get('message'))
+
         if validation_result.get('customer_exists'):
             raise InvalidRequestException(f'Customer with email {email} already exists')
 
@@ -65,6 +69,9 @@ def validate_laundry_outlet_information(request_data: dict):
 
     if not isinstance(request_data.get('phone_number'), str):
         raise InvalidRegistrationException('Phone number must be a string')
+
+    if len(request_data.get('phone_number')) > 15:
+        raise InvalidRegistrationException('Phone number must not exceed 15 characters')
 
     if not utils.validate_phone_number(request_data.get('phone_number')):
         raise InvalidRegistrationException('Phone number is invalid')
@@ -159,12 +166,12 @@ def save_updated_outlet_data(laundry_outlet: LaundryOutlet, request_data: dict):
 def update_outlet_data(request_data: dict):
     validate_update_availability_and_quota_data(request_data)
     validate_laundry_outlet_information(request_data)
-    laundry_outlet = utils.get_laundry_outlet_from_email(request_data.get('email'))
+    laundry_outlet = utils.get_laundry_outlet_from_email_thread_safe(request_data.get('email'))
     save_updated_outlet_data(laundry_outlet, request_data)
 
 
 def validate_service_category_datum(service_category_data):
-    if not application_utils.is_uuid(service_category_data.get('service_category_id')):
+    if not application_utils.is_valid_uuid(service_category_data.get('service_category_id')):
         raise InvalidRequestException('Service category ID must be a UUID string')
 
     if not utils.predetermined_service_category_exists(service_category_data.get('service_category_id')):
@@ -186,7 +193,9 @@ def validate_update_item_category_data(request_data):
 
 
 def update_existing_or_create_services_data(laundry_outlet_email: str, services_provided: list):
-    outlet_provided_services = ItemCategoryProvided.objects.filter(laundry_outlet_email=laundry_outlet_email)
+    outlet_provided_services = (ItemCategoryProvided.objects
+                                .filter(laundry_outlet_email=laundry_outlet_email)
+                                .select_for_update())
 
     for service_provided in services_provided:
         service_category_id = service_provided.get('service_category_id')
@@ -215,12 +224,3 @@ def update_item_category_provided(request_data: dict):
 
 def check_outlet_existence(request_data):
     return utils.laundry_outlet_with_email_exist(request_data.get('email'))
-
-
-
-
-
-
-
-
-

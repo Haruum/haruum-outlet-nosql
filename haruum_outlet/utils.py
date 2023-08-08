@@ -5,11 +5,11 @@ import numbers
 import uuid
 
 
-def is_uuid(uuid_string) -> bool:
+def is_valid_uuid(uuid_string) -> bool:
     try:
         uuid.UUID(uuid_string)
         return True
-    except ValueError:
+    except (ValueError, TypeError):
         return False
 
 

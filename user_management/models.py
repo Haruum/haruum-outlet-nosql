@@ -1,31 +1,25 @@
-from django.db import models, transaction
-from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from order.exceptions import OrderException
-from .managers import HaruumUserManager
+from .managers import LaundryOutletManager
+
 import uuid
 
 
-class HaruumUser(AbstractUser):
-    username = None
-    first_name = None
-    last_name = None
-
+class LaundryOutlet(models.Model):
     email = models.EmailField(_('email address'), unique=True)
     name = models.CharField(max_length=100, null=False)
     phone_number = models.CharField(max_length=15, null=False)
+    password = models.TextField()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'phone_number']
 
-    objects = HaruumUserManager()
+    objects = LaundryOutletManager()
 
-    class Meta:
-        db_table = 'auth_user'
-
-
-class LaundryOutlet(HaruumUser):
     address = models.TextField()
     latitude = models.FloatField(null=True, default=None)
     longitude = models.FloatField(null=True, default=None)
@@ -35,6 +29,13 @@ class LaundryOutlet(HaruumUser):
     amount_of_reviewed_orders = models.IntegerField(default=0)
     is_available = models.BooleanField(default=True)
     outlet_rating = models.FloatField(default=0)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+        self.save()
+
+    def check_password(self, raw_password) -> bool:
+        return check_password(raw_password, self.password)
 
     def set_is_available(self, is_available):
         self.is_available = is_available

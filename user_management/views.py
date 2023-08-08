@@ -1,6 +1,7 @@
+from django.db import transaction
+from django.views.decorators.http import require_POST, require_GET
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from django.views.decorators.http import require_POST, require_GET
 from .models import LaundryOutletSerializer
 from .services import auth
 import json
@@ -61,6 +62,7 @@ def serve_get_laundry_outlet_data(request):
 
 @require_POST
 @api_view(['POST'])
+@transaction.atomic()
 def serve_update_laundry_outlet_data(request):
     """
     This view updates the laundry outlet data
@@ -81,6 +83,7 @@ def serve_update_laundry_outlet_data(request):
 
 @require_POST
 @api_view(['POST'])
+@transaction.atomic()
 def serve_update_item_category_provided(request):
     """
     This view updates the laundry outlet provided services.
