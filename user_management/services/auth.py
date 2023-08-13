@@ -141,6 +141,7 @@ def register_laundry_outlet(request_data: dict):
     return laundry_outlet
 
 
+@catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
 def get_laundry_outlet_data(request_data: dict):
     laundry_outlet = utils.get_laundry_outlet_from_email(request_data.get('email'))
     return laundry_outlet

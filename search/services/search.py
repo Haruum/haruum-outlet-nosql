@@ -8,7 +8,7 @@ from user_management.models import (
 from user_management.services import utils as user_management_utils
 
 
-def get_outlet_based_on_name(outlet_name):
+def get_outlets_based_on_name(outlet_name):
     if outlet_name is not None:
         laundry_outlets = LaundryOutlet.objects.filter(name__icontains=outlet_name)
     else:
@@ -25,7 +25,7 @@ def sort_laundry_outlet_based_on_distance_to_coordinate(laundry_outlets, latitud
 
 
 def get_outlets(request_data):
-    laundry_outlets = get_outlet_based_on_name(request_data.get('name'))
+    laundry_outlets = get_outlets_based_on_name(request_data.get('name'))
     latitude = application_utils.save_convert_string_to_number(request_data.get('latitude'))
     longitude = application_utils.save_convert_string_to_number(request_data.get('longitude'))
 

@@ -61,9 +61,16 @@ class LaundryOutlet(models.Model):
     def can_accept_order(self):
         return self.amount_of_active_orders < self.total_quota
 
+    def get_is_available(self):
+        return self.is_available
+
     def accept_one_order(self):
         if not self.can_accept_order():
             raise OrderException(f'Laundry outlet {self.name} has reached its maximum workload')
+
+        elif not self.get_is_available():
+            raise OrderException(f'Laundry outlet {self.name} is currently not accepting order')
+
         else:
             self.amount_of_active_orders += 1
             self.save()
