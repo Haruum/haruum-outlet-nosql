@@ -2,10 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.views.decorators.http import require_GET
 from user_management.models import (
-    LaundryOutletSerializer,
-    ItemCategoryProvidedSerializer,
     PredeterminedServiceCategorySerializer
 )
+from user_management.serializers.LaundryOutletSerializer import LaundryOutletSerializer
 from .services import search
 
 
@@ -41,8 +40,7 @@ def serve_get_outlet_provided_services(request):
     email: string
     """
     request_data = request.GET
-    provided_services = search.get_outlet_provided_services(request_data)
-    response_data = ItemCategoryProvidedSerializer(provided_services, many=True).data
+    response_data = search.get_outlet_provided_services(request_data)
     return Response(data=response_data)
 
 
@@ -51,6 +49,7 @@ def serve_get_outlet_provided_services(request):
 def serve_get_predetermined_service_categories(request):
     """
     This view returns all predetermined service categories
+    TODO: NO LONGER USED
     ---------------------------------------------
     """
     predetermined_service_categories = search.get_predetermined_service_categories()

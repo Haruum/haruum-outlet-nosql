@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
+from pymongo import MongoClient
 import dj_database_url
 import os
 
@@ -126,6 +127,9 @@ WSGI_APPLICATION = 'haruum_outlet.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(conn_max_age=600)
 }
+
+MONGO_CLIENT = MongoClient('localhost', 27017)
+DATABASE = MONGO_CLIENT['haruum_nosql']
 
 
 # Password validation

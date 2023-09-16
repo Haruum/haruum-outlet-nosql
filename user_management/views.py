@@ -1,15 +1,17 @@
 from django.db import transaction
 from django.views.decorators.http import require_POST, require_GET
-from rest_framework.decorators import api_view, permission_classes
+from haruum_outlet.decorators import transaction_atomic
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import LaundryOutletSerializer
+from .serializers.LaundryOutletSerializer import LaundryOutletSerializer
 from .services import auth
 import json
 
 
 @require_POST
 @api_view(['POST'])
-def serve_register_laundry_outlet(request):
+@transaction_atomic()
+def serve_register_laundry_outlet(database_session, request):
     """
     This view registers a laundry outlet based
     on the data given in the request body.
@@ -22,7 +24,7 @@ def serve_register_laundry_outlet(request):
     password: string
     """
     request_data = json.loads(request.body.decode('utf-8'))
-    laundry_outlet = auth.register_laundry_outlet(request_data)
+    laundry_outlet = auth.register_laundry_outlet(request_data, database_session=database_session)
     response_data = LaundryOutletSerializer(laundry_outlet).data
     return Response(data=response_data)
 
@@ -62,8 +64,8 @@ def serve_get_laundry_outlet_data(request):
 
 @require_POST
 @api_view(['POST'])
-@transaction.atomic()
-def serve_update_laundry_outlet_data(request):
+@transaction_atomic()
+def serve_update_laundry_outlet_data(database_session, request):
     """
     This view updates the laundry outlet data
     (availability status, quota, address)
@@ -76,15 +78,15 @@ def serve_update_laundry_outlet_data(request):
     phone_number: string
     """
     request_data = json.loads(request.body.decode('utf-8'))
-    auth.update_outlet_data(request_data)
+    auth.update_outlet_data(request_data, database_session)
     response_data = {'message': 'Outlet is updated successfully'}
     return Response(data=response_data)
 
 
 @require_POST
 @api_view(['POST'])
-@transaction.atomic()
-def serve_update_item_category_provided(request):
+@transaction_atomic()
+def serve_update_item_category_provided(database_session, request):
     """
     This view updates the laundry outlet provided services.
     ---------------------------------------------
@@ -94,12 +96,12 @@ def serve_update_item_category_provided(request):
 
     services_provided follows the following format
     {
-        service_category_id: uuid string
+        service_category_name: string
         price_per_item: float
     }
     """
     request_data = json.loads(request.body.decode('utf-8'))
-    auth.update_item_category_provided(request_data)
+    auth.update_item_category_provided(request_data, database_session=database_session)
     response_data = {'message': 'Service item category is successfully updated'}
     return Response(data=response_data)
 

@@ -1,8 +1,7 @@
-from django.core.exceptions import ObjectDoesNotExist
 from typing import Optional, Match
-from ..models import LaundryOutlet, PredeterminedServiceCategory
+from ..dto.LaundryOutlet import LaundryOutlet
+from ..dto.ItemCategoryProvided import ItemCategoryProvided
 import phonenumbers
-import uuid
 import re
 
 email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
@@ -46,27 +45,11 @@ def validate_phone_number(phone_number_string) -> bool:
         return False
 
 
-def get_laundry_outlet_from_email(email) -> LaundryOutlet:
-    found_outlet = LaundryOutlet.objects.filter(email=email)
-
-    if found_outlet:
-        return found_outlet[0]
-    else:
-        raise ObjectDoesNotExist(f'Laundry Outlet with email {email} does not exist')
-
-
-def get_laundry_outlet_from_email_thread_safe(email) -> LaundryOutlet:
-    found_outlet = LaundryOutlet.objects.filter(email=email).select_for_update()
-
-    if found_outlet:
-        return found_outlet[0]
-    else:
-        raise ObjectDoesNotExist(f'Laundry Outlet with email {email} does not exist')
-
-
-def laundry_outlet_with_email_exist(email) -> bool:
-    return LaundryOutlet.objects.filter(email=email).exists()
-
-
-def predetermined_service_category_exists(service_category_id) -> bool:
-    return PredeterminedServiceCategory.objects.filter(id=uuid.UUID(service_category_id)).exists()
+def get_outlet_provided_services(outlet: LaundryOutlet):
+    return [
+        ItemCategoryProvided(
+            item_id=item.get('id'),
+            item_name=item.get('service_category_name'),
+            item_price=item.get('item_price')
+        ) for item in outlet.get_items_provided()
+    ]

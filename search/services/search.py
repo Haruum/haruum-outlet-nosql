@@ -1,20 +1,7 @@
+from django.core.exceptions import ObjectDoesNotExist
 from haruum_outlet import utils as application_utils
-from haruum_outlet.exceptions import InvalidRequestException
-from user_management.models import (
-    LaundryOutlet,
-    ItemCategoryProvided,
-    PredeterminedServiceCategory
-)
-from user_management.services import utils as user_management_utils
-
-
-def get_outlets_based_on_name(outlet_name):
-    if outlet_name is not None:
-        laundry_outlets = LaundryOutlet.objects.filter(name__icontains=outlet_name)
-    else:
-        laundry_outlets = LaundryOutlet.objects.all()
-
-    return laundry_outlets
+from haruum_outlet.decorators import catch_exception_and_convert_to_invalid_request_decorator
+from user_management.repositories import outlet as outlet_repository
 
 
 def sort_laundry_outlet_based_on_distance_to_coordinate(laundry_outlets, latitude, longitude):
@@ -25,7 +12,7 @@ def sort_laundry_outlet_based_on_distance_to_coordinate(laundry_outlets, latitud
 
 
 def get_outlets(request_data):
-    laundry_outlets = get_outlets_based_on_name(request_data.get('name'))
+    laundry_outlets = outlet_repository.get_outlets(name=request_data.get('name'))
     latitude = application_utils.save_convert_string_to_number(request_data.get('latitude'))
     longitude = application_utils.save_convert_string_to_number(request_data.get('longitude'))
 
@@ -39,19 +26,11 @@ def get_outlets(request_data):
     return laundry_outlets
 
 
-def validate_outlet_provided_services_request(request_data):
-    if not user_management_utils.laundry_outlet_with_email_exist(request_data.get('email')):
-        raise InvalidRequestException('Laundry Outlet with email does not exist')
-
-
+@catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
 def get_outlet_provided_services(request_data):
-    validate_outlet_provided_services_request(request_data)
-    provided_services = ItemCategoryProvided.objects.filter(laundry_outlet_email=request_data.get('email'))
-    return provided_services
+    laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
+    return laundry_outlet.get_items_provided()
 
-
-def get_predetermined_service_categories():
-    return PredeterminedServiceCategory.objects.all()
 
 
 

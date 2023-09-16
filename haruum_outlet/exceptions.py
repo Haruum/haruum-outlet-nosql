@@ -12,3 +12,7 @@ class InvalidRequestException(Exception):
 
 class FailedToFetchException(Exception):
     pass
+
+
+class MatchedNoRecordException(Exception):
+    pass

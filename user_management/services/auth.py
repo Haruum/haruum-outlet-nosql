@@ -6,12 +6,15 @@ from haruum_outlet.exceptions import (
     FailedToFetchException
 )
 from haruum_outlet.settings import CUSTOMER_VALIDATION_URL
-from haruum_outlet import utils as application_utils
 from rest_framework import status
-from ..models import LaundryOutlet, ItemCategoryProvided
+from ..repositories import outlet as outlet_repository
+from ..dto.LaundryOutlet import LaundryOutlet
+from ..dto.ItemCategoryProvided import ItemCategoryProvided
 from . import utils
 import numbers
 import requests
+
+from ..serializers.ItemCategoryProvidedSerializer import ItemCategoryProvidedSerializer
 
 
 def validate_basic_user_registration_data(request_data: dict):
@@ -24,7 +27,7 @@ def validate_basic_user_registration_data(request_data: dict):
     if not utils.validate_email(email):
         raise InvalidRegistrationException('Email is invalid')
 
-    if LaundryOutlet.objects.filter(email=email).exists():
+    if outlet_repository.outlet_with_email_exists(email):
         raise InvalidRegistrationException(f'Email {email} is already registered')
 
     if not password:
@@ -89,26 +92,10 @@ def validate_laundry_outlet_information(request_data: dict):
         raise InvalidRegistrationException('Longitude must be a number')
 
 
-def save_laundry_outlet_data(outlet_data: dict):
-    email = outlet_data.get('email')
-    password = outlet_data.get('password')
-    name = outlet_data.get('name')
-    phone_number = outlet_data.get('phone_number')
-    address = outlet_data.get('address')
-    latitude = outlet_data.get('latitude')
-    longitude = outlet_data.get('longitude')
-
-    laundry_outlet = LaundryOutlet.objects.create_user(
-        email=email,
-        password=password,
-        name=name,
-        phone_number=phone_number,
-        address=address,
-        latitude=latitude,
-        longitude=longitude
-    )
-
-    return laundry_outlet
+def save_laundry_outlet_data(outlet_data: dict, database_session):
+    laundry_outlet = LaundryOutlet()
+    laundry_outlet.set_values_from_request(outlet_data, should_hash=True)
+    return outlet_repository.create_outlet(laundry_outlet, database_session=database_session)
 
 
 def validate_email_and_password(request_data: dict):
@@ -128,22 +115,22 @@ def validate_email_and_password(request_data: dict):
 @catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
 def check_email_and_password(request_data: dict):
     validate_email_and_password(request_data)
-    laundry_outlet = utils.get_laundry_outlet_from_email(request_data.get('email'))
+    laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
     return laundry_outlet.check_password(request_data.get('password'))
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((InvalidRegistrationException,))
-def register_laundry_outlet(request_data: dict):
+def register_laundry_outlet(request_data: dict, database_session):
     validate_basic_user_registration_data(request_data)
     validate_customer_does_not_exist_for_email(request_data.get('email'))
     validate_laundry_outlet_information(request_data)
-    laundry_outlet = save_laundry_outlet_data(request_data)
+    laundry_outlet = save_laundry_outlet_data(request_data, database_session=database_session)
     return laundry_outlet
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
 def get_laundry_outlet_data(request_data: dict):
-    laundry_outlet = utils.get_laundry_outlet_from_email(request_data.get('email'))
+    laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
     return laundry_outlet
 
 
@@ -155,37 +142,32 @@ def validate_update_availability_and_quota_data(request_data: dict):
         raise InvalidRequestException('Quota must be an integer')
 
 
-def save_updated_outlet_data(laundry_outlet: LaundryOutlet, request_data: dict):
+def save_updated_outlet_data(laundry_outlet: LaundryOutlet, request_data: dict, database_session):
     laundry_outlet.set_is_available(request_data.get('is_available'))
     laundry_outlet.set_quota(request_data.get('quota'))
     laundry_outlet.set_address(request_data.get('address'))
     laundry_outlet.set_coordinate([request_data.get('latitude'), request_data.get('longitude')])
     laundry_outlet.set_phone_number(request_data.get('phone_number'))
+    outlet_repository.update_outlet(laundry_outlet, database_session=database_session)
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((InvalidRegistrationException, ObjectDoesNotExist))
-def update_outlet_data(request_data: dict):
+def update_outlet_data(request_data: dict, database_session):
     validate_update_availability_and_quota_data(request_data)
     validate_laundry_outlet_information(request_data)
-    laundry_outlet = utils.get_laundry_outlet_from_email_thread_safe(request_data.get('email'))
-    save_updated_outlet_data(laundry_outlet, request_data)
+    laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
+    save_updated_outlet_data(laundry_outlet, request_data, database_session=database_session)
 
 
 def validate_service_category_datum(service_category_data):
-    if not application_utils.is_valid_uuid(service_category_data.get('service_category_id')):
-        raise InvalidRequestException('Service category ID must be a UUID string')
-
-    if not utils.predetermined_service_category_exists(service_category_data.get('service_category_id')):
-        raise InvalidRequestException('Service category ID does not exist')
+    if not isinstance(service_category_data.get('service_category_name'), str):
+        raise InvalidRequestException('Service category name must be a string')
 
     if not isinstance(service_category_data.get('price_per_item'), numbers.Number):
         raise InvalidRequestException('Price per item must be of type number')
 
 
 def validate_update_item_category_data(request_data):
-    if not utils.laundry_outlet_with_email_exist(request_data.get('email')):
-        raise InvalidRequestException('Laundry Outlet with email does not exist')
-
     if not isinstance(request_data.get('services_provided'), list):
         raise InvalidRequestException('Service Provided must be a list')
 
@@ -193,35 +175,49 @@ def validate_update_item_category_data(request_data):
         validate_service_category_datum(service_provided)
 
 
-def update_existing_or_create_services_data(laundry_outlet_email: str, services_provided: list):
-    outlet_provided_services = (ItemCategoryProvided.objects
-                                .filter(laundry_outlet_email=laundry_outlet_email)
-                                .select_for_update())
+def update_existing_or_create_services_data(laundry_outlet: LaundryOutlet, updated_services_provided: list,
+                                            database_session):
 
-    for service_provided in services_provided:
-        service_category_id = service_provided.get('service_category_id')
-        item_price = service_provided.get('price_per_item')
-        matching_provided_services = outlet_provided_services.filter(service_category_id=service_category_id)
+    outlet_provided_services = utils.get_outlet_provided_services(laundry_outlet)
+
+    for service_provided in updated_services_provided:
+        service_category_name = service_provided.get("service_category_name").strip().lower()
+        item_price = service_provided.get("price_per_item")
+        matching_provided_services = [
+            item
+            for item in outlet_provided_services
+            if item.get_name() == service_category_name
+        ]
 
         if len(matching_provided_services) > 0:
             matching_provided_service = matching_provided_services[0]
             matching_provided_service.set_item_price(item_price)
 
         else:
-            ItemCategoryProvided.objects.create(
-                laundry_outlet_email=laundry_outlet_email,
-                service_category_id=service_category_id,
-                item_price=item_price
+            outlet_provided_services.append(
+                ItemCategoryProvided(
+                    item_name=service_category_name,
+                    item_price=item_price
+                )
             )
 
+    outlet_repository.update_outlet_services(
+        laundry_outlet.get_email(),
+        ItemCategoryProvidedSerializer(outlet_provided_services, many=True).data,
+        database_session=database_session,
+    )
 
-def update_item_category_provided(request_data: dict):
+
+@catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
+def update_item_category_provided(request_data: dict, database_session):
+    laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
     validate_update_item_category_data(request_data)
     update_existing_or_create_services_data(
-        request_data.get('email'),
-        request_data.get('services_provided')
+        laundry_outlet,
+        request_data.get('services_provided'),
+        database_session=database_session
     )
 
 
 def check_outlet_existence(request_data):
-    return utils.laundry_outlet_with_email_exist(request_data.get('email'))
+    return outlet_repository.outlet_with_email_exists(request_data.get('email'))
