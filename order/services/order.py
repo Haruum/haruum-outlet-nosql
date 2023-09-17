@@ -12,23 +12,23 @@ def validate_accept_order_request(laundry_outlet):
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((OrderException, ObjectDoesNotExist))
-def register_order_to_outlet(request_data, database_session):
+def register_order_to_outlet(request_data):
     laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('laundry_outlet_email'))
     validate_accept_order_request(laundry_outlet)
 
     try:
-        order_repository.update_accept_one_order(laundry_outlet, database_session=database_session)
+        order_repository.update_accept_one_order(laundry_outlet)
     except MatchedNoRecordException:
         raise OrderException(f'Laundry outlet {laundry_outlet.get_name()} has reached its maximum workload')
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((OrderException, ObjectDoesNotExist))
-def finish_order_from_outlet(request_data, database_session):
+def finish_order_from_outlet(request_data):
     laundry_outlet_email = request_data.get('laundry_outlet_email')
     laundry_outlet = outlet_repository.get_outlet_by_email(laundry_outlet_email)
 
     try:
-        order_repository.update_finish_one_order(laundry_outlet, database_session=database_session)
+        order_repository.update_finish_one_order(laundry_outlet)
     except MatchedNoRecordException:
         raise OrderException(f'Laundry outlet {laundry_outlet.get_name()} has 0 orders')
 
@@ -39,13 +39,12 @@ def validate_rating_data(request_data):
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
-def update_outlet_rating(request_data, database_session):
+def update_outlet_rating(request_data):
     validate_rating_data(request_data)
     laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('laundry_outlet_email'))
     order_repository.update_outlet_rating(
         laundry_outlet,
-        request_data.get('new_rating'),
-        database_session=database_session
+        request_data.get('new_rating')
     )
 
 

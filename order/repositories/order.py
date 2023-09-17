@@ -4,7 +4,7 @@ from haruum_outlet.collections import OUTLET
 from user_management.dto.LaundryOutlet import LaundryOutlet
 
 
-def update_accept_one_order(laundry_dto: LaundryOutlet, database_session):
+def update_accept_one_order(laundry_dto: LaundryOutlet):
     update_result = DATABASE[OUTLET].update_one(
         {
             'email': laundry_dto.get_email(),
@@ -12,15 +12,14 @@ def update_accept_one_order(laundry_dto: LaundryOutlet, database_session):
                 '$lt': laundry_dto.get_total_quota()
             },
         },
-        {'$inc': {'amount_of_active_orders': 1}},
-        session=database_session
+        {'$inc': {'amount_of_active_orders': 1}}
     )
 
     if update_result.matched_count == 0:
         raise MatchedNoRecordException('Update condition does not match any record')
 
 
-def update_finish_one_order(laundry_dto: LaundryOutlet, database_session):
+def update_finish_one_order(laundry_dto: LaundryOutlet):
     update_result = DATABASE[OUTLET].update_one(
         {
             'email': laundry_dto.get_email(),
@@ -28,15 +27,14 @@ def update_finish_one_order(laundry_dto: LaundryOutlet, database_session):
                 '$gt': 0
             },
         },
-        {'$inc': {'amount_of_active_orders': -1}},
-        session=database_session
+        {'$inc': {'amount_of_active_orders': -1}}
     )
 
     if update_result.matched_count == 0:
         raise MatchedNoRecordException('Update condition does not match any record')
 
 
-def update_outlet_rating(laundry_dto: LaundryOutlet, new_rating: int, database_session):
+def update_outlet_rating(laundry_dto: LaundryOutlet, new_rating: int):
     DATABASE['outlet'].update_one(
         {'email': laundry_dto.get_email()},
         [
@@ -69,6 +67,5 @@ def update_outlet_rating(laundry_dto: LaundryOutlet, new_rating: int, database_s
             {
                 '$unset': ['previous_accumulative_rating', 'new_accumulative_rating']
             }
-        ],
-        session=database_session
+        ]
     )

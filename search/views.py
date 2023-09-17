@@ -1,9 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.views.decorators.http import require_GET
-from user_management.models import (
-    PredeterminedServiceCategorySerializer
-)
 from user_management.serializers.LaundryOutletSerializer import LaundryOutletSerializer
 from .services import search
 
@@ -42,20 +39,4 @@ def serve_get_outlet_provided_services(request):
     request_data = request.GET
     response_data = search.get_outlet_provided_services(request_data)
     return Response(data=response_data)
-
-
-@require_GET
-@api_view(['GET'])
-def serve_get_predetermined_service_categories(request):
-    """
-    This view returns all predetermined service categories
-    TODO: NO LONGER USED
-    ---------------------------------------------
-    """
-    predetermined_service_categories = search.get_predetermined_service_categories()
-    response_data = PredeterminedServiceCategorySerializer(predetermined_service_categories, many=True).data
-    return Response(data=response_data)
-
-
-
 

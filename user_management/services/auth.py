@@ -92,10 +92,10 @@ def validate_laundry_outlet_information(request_data: dict):
         raise InvalidRegistrationException('Longitude must be a number')
 
 
-def save_laundry_outlet_data(outlet_data: dict, database_session):
+def save_laundry_outlet_data(outlet_data: dict):
     laundry_outlet = LaundryOutlet()
     laundry_outlet.set_values_from_request(outlet_data, should_hash=True)
-    return outlet_repository.create_outlet(laundry_outlet, database_session=database_session)
+    return outlet_repository.create_outlet(laundry_outlet)
 
 
 def validate_email_and_password(request_data: dict):
@@ -120,11 +120,11 @@ def check_email_and_password(request_data: dict):
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((InvalidRegistrationException,))
-def register_laundry_outlet(request_data: dict, database_session):
+def register_laundry_outlet(request_data: dict):
     validate_basic_user_registration_data(request_data)
     validate_customer_does_not_exist_for_email(request_data.get('email'))
     validate_laundry_outlet_information(request_data)
-    laundry_outlet = save_laundry_outlet_data(request_data, database_session=database_session)
+    laundry_outlet = save_laundry_outlet_data(request_data)
     return laundry_outlet
 
 
@@ -142,21 +142,21 @@ def validate_update_availability_and_quota_data(request_data: dict):
         raise InvalidRequestException('Quota must be an integer')
 
 
-def save_updated_outlet_data(laundry_outlet: LaundryOutlet, request_data: dict, database_session):
+def save_updated_outlet_data(laundry_outlet: LaundryOutlet, request_data: dict):
     laundry_outlet.set_is_available(request_data.get('is_available'))
     laundry_outlet.set_quota(request_data.get('quota'))
     laundry_outlet.set_address(request_data.get('address'))
     laundry_outlet.set_coordinate([request_data.get('latitude'), request_data.get('longitude')])
     laundry_outlet.set_phone_number(request_data.get('phone_number'))
-    outlet_repository.update_outlet(laundry_outlet, database_session=database_session)
+    outlet_repository.update_outlet(laundry_outlet)
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((InvalidRegistrationException, ObjectDoesNotExist))
-def update_outlet_data(request_data: dict, database_session):
+def update_outlet_data(request_data: dict):
     validate_update_availability_and_quota_data(request_data)
     validate_laundry_outlet_information(request_data)
     laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
-    save_updated_outlet_data(laundry_outlet, request_data, database_session=database_session)
+    save_updated_outlet_data(laundry_outlet, request_data)
 
 
 def validate_service_category_datum(service_category_data):
@@ -175,9 +175,7 @@ def validate_update_item_category_data(request_data):
         validate_service_category_datum(service_provided)
 
 
-def update_existing_or_create_services_data(laundry_outlet: LaundryOutlet, updated_services_provided: list,
-                                            database_session):
-
+def update_existing_or_create_services_data(laundry_outlet: LaundryOutlet, updated_services_provided: list):
     outlet_provided_services = utils.get_outlet_provided_services(laundry_outlet)
 
     for service_provided in updated_services_provided:
@@ -203,19 +201,17 @@ def update_existing_or_create_services_data(laundry_outlet: LaundryOutlet, updat
 
     outlet_repository.update_outlet_services(
         laundry_outlet.get_email(),
-        ItemCategoryProvidedSerializer(outlet_provided_services, many=True).data,
-        database_session=database_session,
+        ItemCategoryProvidedSerializer(outlet_provided_services, many=True).data
     )
 
 
 @catch_exception_and_convert_to_invalid_request_decorator((ObjectDoesNotExist,))
-def update_item_category_provided(request_data: dict, database_session):
+def update_item_category_provided(request_data: dict):
     laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('email'))
     validate_update_item_category_data(request_data)
     update_existing_or_create_services_data(
         laundry_outlet,
-        request_data.get('services_provided'),
-        database_session=database_session
+        request_data.get('services_provided')
     )
 
 

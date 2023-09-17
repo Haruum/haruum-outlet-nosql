@@ -41,24 +41,22 @@ def get_outlets(name=None):
     return converted_outlets
 
 
-def create_outlet(laundry_dto: LaundryOutlet, database_session):
-    DATABASE[OUTLET].insert_one(laundry_dto.get_all(), session=database_session)
+def create_outlet(laundry_dto: LaundryOutlet):
+    DATABASE[OUTLET].insert_one(laundry_dto.get_all())
     return laundry_dto
 
 
-def update_outlet(laundry_dto: LaundryOutlet, database_session):
+def update_outlet(laundry_dto: LaundryOutlet):
     DATABASE[OUTLET].update_one(
         {'email': laundry_dto.get_email()},
-        {'$set': laundry_dto.get_updatable_fields()},
-        session=database_session
+        {'$set': laundry_dto.get_updatable_fields()}
     )
 
 
-def update_outlet_services(outlet_email: str, items_provided, database_session):
+def update_outlet_services(outlet_email: str, items_provided):
     DATABASE[OUTLET].update_one(
         {'email': outlet_email},
         {'$set': {
             'items_provided': items_provided
-        }},
-        session=database_session
+        }}
     )

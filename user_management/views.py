@@ -1,6 +1,4 @@
-from django.db import transaction
 from django.views.decorators.http import require_POST, require_GET
-from haruum_outlet.decorators import transaction_atomic
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers.LaundryOutletSerializer import LaundryOutletSerializer
@@ -10,8 +8,7 @@ import json
 
 @require_POST
 @api_view(['POST'])
-@transaction_atomic()
-def serve_register_laundry_outlet(database_session, request):
+def serve_register_laundry_outlet(request):
     """
     This view registers a laundry outlet based
     on the data given in the request body.
@@ -24,7 +21,7 @@ def serve_register_laundry_outlet(database_session, request):
     password: string
     """
     request_data = json.loads(request.body.decode('utf-8'))
-    laundry_outlet = auth.register_laundry_outlet(request_data, database_session=database_session)
+    laundry_outlet = auth.register_laundry_outlet(request_data)
     response_data = LaundryOutletSerializer(laundry_outlet).data
     return Response(data=response_data)
 
@@ -64,8 +61,7 @@ def serve_get_laundry_outlet_data(request):
 
 @require_POST
 @api_view(['POST'])
-@transaction_atomic()
-def serve_update_laundry_outlet_data(database_session, request):
+def serve_update_laundry_outlet_data(request):
     """
     This view updates the laundry outlet data
     (availability status, quota, address)
@@ -78,15 +74,14 @@ def serve_update_laundry_outlet_data(database_session, request):
     phone_number: string
     """
     request_data = json.loads(request.body.decode('utf-8'))
-    auth.update_outlet_data(request_data, database_session)
+    auth.update_outlet_data(request_data)
     response_data = {'message': 'Outlet is updated successfully'}
     return Response(data=response_data)
 
 
 @require_POST
 @api_view(['POST'])
-@transaction_atomic()
-def serve_update_item_category_provided(database_session, request):
+def serve_update_item_category_provided(request):
     """
     This view updates the laundry outlet provided services.
     ---------------------------------------------
@@ -101,7 +96,7 @@ def serve_update_item_category_provided(database_session, request):
     }
     """
     request_data = json.loads(request.body.decode('utf-8'))
-    auth.update_item_category_provided(request_data, database_session=database_session)
+    auth.update_item_category_provided(request_data)
     response_data = {'message': 'Service item category is successfully updated'}
     return Response(data=response_data)
 
