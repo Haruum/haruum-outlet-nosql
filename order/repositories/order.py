@@ -9,7 +9,7 @@ def update_accept_one_order(laundry_dto: LaundryOutlet):
         {
             'email': laundry_dto.get_email(),
             'amount_of_active_orders': {
-                '$lt': laundry_dto.get_total_quota()
+                '$lt': '$total_quota'
             },
         },
         {'$inc': {'amount_of_active_orders': 1}}
