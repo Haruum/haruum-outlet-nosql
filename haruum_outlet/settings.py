@@ -130,5 +130,3 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CUSTOMER_APPLICATION_URL = 'http://localhost:8001'
-CUSTOMER_VALIDATION_URL = f'{CUSTOMER_APPLICATION_URL}/user/check-exist/?email='

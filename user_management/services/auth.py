@@ -3,16 +3,12 @@ from haruum_outlet.decorators import catch_exception_and_convert_to_invalid_requ
 from haruum_outlet.exceptions import (
     InvalidRegistrationException,
     InvalidRequestException,
-    FailedToFetchException
 )
-from haruum_outlet.settings import CUSTOMER_VALIDATION_URL
-from rest_framework import status
 from ..repositories import outlet as outlet_repository
 from ..dto.LaundryOutlet import LaundryOutlet
 from ..dto.ItemCategoryProvided import ItemCategoryProvided
 from . import utils
 import numbers
-import requests
 
 from ..serializers.ItemCategoryProvidedSerializer import ItemCategoryProvidedSerializer
 
@@ -43,27 +39,6 @@ def validate_basic_user_registration_data(request_data: dict):
 
     if len(request_data.get('name')) > 100:
         raise InvalidRegistrationException('Name must not exceed 100 characters')
-
-
-def validate_customer_does_not_exist_for_email(email):
-    """
-    This method fetches the CustomerService and
-    checks if the inputted email exists in the customer's database.
-    """
-    validation_url = f'{CUSTOMER_VALIDATION_URL}{email}'
-
-    try:
-        customer_exists_response = requests.get(validation_url)
-        validation_result = customer_exists_response.json()
-
-        if customer_exists_response.status_code != status.HTTP_200_OK:
-            raise FailedToFetchException(validation_result.get('message'))
-
-        if validation_result.get('customer_exists'):
-            raise InvalidRequestException(f'Customer with email {email} already exists')
-
-    except requests.exceptions.RequestException:
-        raise FailedToFetchException('Failed to validate customer existence')
 
 
 def validate_laundry_outlet_information(request_data: dict):
@@ -122,7 +97,6 @@ def check_email_and_password(request_data: dict):
 @catch_exception_and_convert_to_invalid_request_decorator((InvalidRegistrationException,))
 def register_laundry_outlet(request_data: dict):
     validate_basic_user_registration_data(request_data)
-    validate_customer_does_not_exist_for_email(request_data.get('email'))
     validate_laundry_outlet_information(request_data)
     laundry_outlet = save_laundry_outlet_data(request_data)
     return laundry_outlet
