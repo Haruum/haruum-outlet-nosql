@@ -16,6 +16,7 @@ def serve_register_order_to_outlet(request):
     ---------------------------------------------
     request data must contain:
     laundry_outlet_email: string
+    order_quantity: integer
     """
     request_data = json.loads(request.body.decode('utf-8'))
     order.register_order_to_outlet(request_data)
@@ -32,6 +33,7 @@ def serve_finish_order_from_outlet(request):
     ---------------------------------------------
     request data must contain:
     laundry_outlet_email: string
+    order_quantity: integer
     """
     request_data = json.loads(request.body.decode('utf-8'))
     order.finish_order_from_outlet(request_data)

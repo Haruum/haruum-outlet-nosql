@@ -85,8 +85,15 @@ REST_FRAMEWORK = {
 WSGI_APPLICATION = 'haruum_outlet.wsgi.application'
 
 # Database Setup
-MONGO_CLIENT = MongoClient('localhost', 27017)
-DATABASE = MONGO_CLIENT['haruum_nosql']
+MONGO_HOST = os.getenv('MONGO_HOST')
+MONGO_PORT = os.getenv('MONGO_PORT')
+MONGO_USERNAME = os.getenv('MONGO_USERNAME')
+MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
+MONGO_DBNAME = os.getenv('MONGO_DBNAME')
+
+MONGO_URL = f'mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}'
+MONGO_CLIENT = MongoClient(MONGO_URL)
+DATABASE = MONGO_CLIENT[MONGO_DBNAME]
 
 
 # Password validation

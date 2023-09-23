@@ -13,7 +13,7 @@ class LaundryOutlet:
         self.longitude = None
 
         self.total_quota = 10
-        self.amount_of_active_orders = 0
+        self.amount_of_active_items = 0
         self.amount_of_reviewed_orders = 0
         self.is_available = True
         self.outlet_rating = 0
@@ -37,7 +37,7 @@ class LaundryOutlet:
     def set_values_from_query_result(self, result):
         self.set_values_from_request(result, should_hash=False)
         self.total_quota = result.get('total_quota')
-        self.amount_of_active_orders = result.get('amount_of_active_orders')
+        self.amount_of_active_items = result.get('amount_of_active_items')
         self.amount_of_reviewed_orders = result.get('amount_of_reviewed_orders')
         self.is_available = result.get('is_available')
         self.outlet_rating = result.get('outlet_rating')
@@ -67,8 +67,8 @@ class LaundryOutlet:
     def get_total_quota(self):
         return self.total_quota
 
-    def get_amount_of_active_orders(self):
-        return self.amount_of_active_orders
+    def get_amount_of_active_items(self):
+        return self.amount_of_active_items
 
     def get_amount_of_reviewed_orders(self):
         return self.amount_of_reviewed_orders
@@ -91,7 +91,7 @@ class LaundryOutlet:
             'address': self.get_address(),
             'latitude': self.get_latitude(),
             'total_quota': self.get_total_quota(),
-            'amount_of_active_orders': self.get_amount_of_active_orders(),
+            'amount_of_active_items': self.get_amount_of_active_items(),
             'amount_of_reviewed_orders': self.get_amount_of_reviewed_orders(),
             'is_available': self.get_is_available(),
             'outlet_rating': self.get_outlet_rating(),

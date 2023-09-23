@@ -14,7 +14,8 @@ class LaundryOutletSerializer:
             'phone_number': outlet_dto.get_phone_number(),
             'address': outlet_dto.get_address(),
             'total_quota': outlet_dto.get_total_quota(),
-            'amount_of_active_orders': outlet_dto.get_amount_of_active_orders(),
+            'amount_of_active_items': outlet_dto.get_amount_of_active_items(),
             'is_available': outlet_dto.get_is_available(),
-            'outlet_rating': outlet_dto.get_outlet_rating()
+            'outlet_rating': outlet_dto.get_outlet_rating(),
+            'items_provided': outlet_dto.get_items_provided(),
         }

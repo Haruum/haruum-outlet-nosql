@@ -4,30 +4,33 @@ from haruum_outlet.collections import OUTLET
 from user_management.dto.LaundryOutlet import LaundryOutlet
 
 
-def update_accept_one_order(laundry_dto: LaundryOutlet):
+def update_accept_one_order(laundry_dto: LaundryOutlet, order_quantity):
     update_result = DATABASE[OUTLET].update_one(
         {
             'email': laundry_dto.get_email(),
-            'amount_of_active_orders': {
-                '$lt': '$total_quota'
-            },
+            '$expr': {
+                '$lt': [
+                    {'$add': ['$amount_of_active_items', order_quantity]},
+                    '$total_quota'
+                ]
+            }
         },
-        {'$inc': {'amount_of_active_orders': 1}}
+        {'$inc': {'amount_of_active_items': order_quantity}}
     )
 
     if update_result.matched_count == 0:
         raise MatchedNoRecordException('Update condition does not match any record')
 
 
-def update_finish_one_order(laundry_dto: LaundryOutlet):
+def update_finish_one_order(laundry_dto: LaundryOutlet, order_quantity):
     update_result = DATABASE[OUTLET].update_one(
         {
             'email': laundry_dto.get_email(),
-            'amount_of_active_orders': {
-                '$gt': 0
+            '$expr': {
+              '$gt': ['$amount_of_active_items', order_quantity]
             },
         },
-        {'$inc': {'amount_of_active_orders': -1}}
+        {'$inc': {'amount_of_active_items': -order_quantity}}
     )
 
     if update_result.matched_count == 0:
