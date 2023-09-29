@@ -140,6 +140,9 @@ def validate_service_category_datum(service_category_data):
     if not isinstance(service_category_data.get('price_per_item'), numbers.Number):
         raise InvalidRequestException('Price per item must be of type number')
 
+    if service_category_data.get('price_per_item') <= 0:
+        raise InvalidRequestException('Price per item must be a positive number')
+
 
 def validate_update_item_category_data(request_data):
     if not isinstance(request_data.get('services_provided'), list):

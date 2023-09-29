@@ -26,7 +26,10 @@ def register_order_to_outlet(request_data):
     validate_accept_order_request(laundry_outlet)
 
     try:
-        order_repository.update_accept_one_order(laundry_outlet, request_data.get('order_quantity'))
+        order_repository.update_accept_one_order(
+            laundry_outlet.get_email(),
+            request_data.get('order_quantity')
+        )
     except MatchedNoRecordException:
         raise OrderException(f'Laundry outlet {laundry_outlet.get_name()} has reached its maximum workload')
 
@@ -38,9 +41,14 @@ def finish_order_from_outlet(request_data):
     laundry_outlet = outlet_repository.get_outlet_by_email(laundry_outlet_email)
 
     try:
-        order_repository.update_finish_one_order(laundry_outlet, request_data.get('order_quantity'))
+        order_repository.update_finish_one_order(
+            laundry_outlet.get_email(),
+            request_data.get('order_quantity')
+        )
     except MatchedNoRecordException:
-        raise OrderException(f'Laundry outlet {laundry_outlet.get_name()} has 0 orders')
+        raise OrderException(
+            f'Laundry outlet {laundry_outlet.get_name()} has less orders than {request_data.get("order_quantity")}'
+        )
 
 
 def validate_rating_data(request_data):
@@ -53,7 +61,7 @@ def update_outlet_rating(request_data):
     validate_rating_data(request_data)
     laundry_outlet = outlet_repository.get_outlet_by_email(request_data.get('laundry_outlet_email'))
     order_repository.update_outlet_rating(
-        laundry_outlet,
+        laundry_outlet.get_email(),
         request_data.get('new_rating')
     )
 

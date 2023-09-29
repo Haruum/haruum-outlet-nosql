@@ -4,12 +4,12 @@ from haruum_outlet.collections import OUTLET
 from user_management.dto.LaundryOutlet import LaundryOutlet
 
 
-def update_accept_one_order(laundry_dto: LaundryOutlet, order_quantity):
+def update_accept_one_order(outlet_email, order_quantity):
     update_result = DATABASE[OUTLET].update_one(
         {
-            'email': laundry_dto.get_email(),
+            'email': outlet_email,
             '$expr': {
-                '$lt': [
+                '$lte': [
                     {'$add': ['$amount_of_active_items', order_quantity]},
                     '$total_quota'
                 ]
@@ -22,12 +22,12 @@ def update_accept_one_order(laundry_dto: LaundryOutlet, order_quantity):
         raise MatchedNoRecordException('Update condition does not match any record')
 
 
-def update_finish_one_order(laundry_dto: LaundryOutlet, order_quantity):
+def update_finish_one_order(outlet_email, order_quantity):
     update_result = DATABASE[OUTLET].update_one(
         {
-            'email': laundry_dto.get_email(),
+            'email': outlet_email,
             '$expr': {
-              '$gt': ['$amount_of_active_items', order_quantity]
+              '$gte': ['$amount_of_active_items', order_quantity]
             },
         },
         {'$inc': {'amount_of_active_items': -order_quantity}}
@@ -37,9 +37,9 @@ def update_finish_one_order(laundry_dto: LaundryOutlet, order_quantity):
         raise MatchedNoRecordException('Update condition does not match any record')
 
 
-def update_outlet_rating(laundry_dto: LaundryOutlet, new_rating: int):
+def update_outlet_rating(outlet_email, new_rating: int):
     DATABASE['outlet'].update_one(
-        {'email': laundry_dto.get_email()},
+        {'email': outlet_email},
         [
             {'$set': {
                 'previous_accumulative_rating': {
