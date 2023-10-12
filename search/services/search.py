@@ -1,3 +1,4 @@
+from . import utils
 from django.core.exceptions import ObjectDoesNotExist
 from haruum_outlet import utils as application_utils
 from haruum_outlet.decorators import catch_exception_and_convert_to_invalid_request_decorator
@@ -8,7 +9,14 @@ def sort_laundry_outlet_based_on_distance_to_coordinate(laundry_outlets, latitud
     """
     This function sorts the laundry outlet based on distance to coordinate.
     """
-    return []
+    return sorted(
+        laundry_outlets,
+        key=lambda outlet: utils.haversine(
+            outlet.get_latitude(),
+            outlet.get_longitude(),
+            latitude, longitude
+        )
+    )
 
 
 def get_outlets(request_data):
