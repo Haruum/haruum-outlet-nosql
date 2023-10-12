@@ -26,7 +26,7 @@ class LaundryOutlet:
         self.phone_number = request_data.get('phone_number')
         self.address = request_data.get('address')
         self.latitude = request_data.get('latitude')
-        self.latitude = request_data.get('latitude')
+        self.longitude = request_data.get('longitude')
 
         if should_hash:
             self.password = make_password(request_data.get('password'))
@@ -90,6 +90,7 @@ class LaundryOutlet:
             'password': self.get_password(),
             'address': self.get_address(),
             'latitude': self.get_latitude(),
+            'longitude': self.get_longitude(),
             'total_quota': self.get_total_quota(),
             'amount_of_active_items': self.get_amount_of_active_items(),
             'amount_of_reviewed_orders': self.get_amount_of_reviewed_orders(),
